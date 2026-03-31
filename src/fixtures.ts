@@ -3,19 +3,18 @@ import { attachTestLens, flushTestLens } from './attachTestLens';
 
 /**
  * Drop-in replacement for Playwright's `test` that automatically enables
- * TestLens network capture for every test.
+ * TestLens capture when the Playwright `page` fixture is used.
  *
  * Usage:
  *   import { test, expect } from 'testlens-playwright/fixtures';
  */
-export const test = base;
 export const expect = baseExpect;
 
-test.beforeEach(async ({ page }, testInfo) => {
-  attachTestLens(page, testInfo);
-});
-
-test.afterEach(async ({}, testInfo) => {
-  await flushTestLens(testInfo);
+export const test = base.extend({
+  page: async ({ page }, use, testInfo) => {
+    attachTestLens(page, testInfo);
+    await use(page);
+    await flushTestLens(testInfo);
+  },
 });
 

@@ -12,7 +12,7 @@ test('shows console error signal in TestLens summary', async ({ page }) => {
     </html>
   `);
 
-  // Force a failure so TestLens prints a summary entry for this test.
+  // Force a failure so TestLens prints a summary entry for this teast.
   await expect(page.locator('#missing')).toBeVisible();
 });
 

@@ -1,6 +1,6 @@
 {
   "name": "testlens-playwright",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Lightweight Playwright reporter that summarizes why tests failed.",
   "license": "MIT",
   "author": "TestLens Contributors",
@@ -59,6 +59,10 @@
     "./fixtures": {
       "types": "./dist/fixtures.d.ts",
       "default": "./dist/fixtures.js"
+    },
+    "./integrations": {
+      "types": "./dist/integrations/register.d.ts",
+      "default": "./dist/integrations/register.js"
     }
   }
 }
