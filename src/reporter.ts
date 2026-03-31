@@ -50,7 +50,8 @@ function pickDisplayTests(tests: CollectedTestFailure[]) {
 }
 
 export class TestLensReporter implements Reporter {
-  private collected: CollectedTestFailure[] = [];
+  // Keyed by test.id so retries overwrite earlier attempts — last result wins.
+  private collected: Map<string, CollectedTestFailure> = new Map();
   private config?: FullConfig;
 
   onBegin(config: FullConfig, _suite: Suite) {
@@ -60,16 +61,15 @@ export class TestLensReporter implements Reporter {
   onTestEnd(test: TestCase, result: TestResult) {
     const collected = collectFailureFromTestEnd({ test, result });
 
-    // Capture failed, timedOut, and flaky; ignore clean passes.
     const isFlaky = collected.status === 'flaky' || (collected.status === 'passed' && collected.retry > 0);
     const isFail = collected.status === 'failed' || collected.status === 'timedOut';
     if (!isFlaky && !isFail) return;
 
-    this.collected.push(collected);
+    this.collected.set(test.id, collected);
   }
 
   onEnd() {
-    const { failed, flaky } = pickDisplayTests(this.collected);
+    const { failed, flaky } = pickDisplayTests([...this.collected.values()]);
     if (failed.length === 0 && flaky.length === 0) return;
 
     const ansi = makeAnsi(supportsColor(colorModeFromEnv()));

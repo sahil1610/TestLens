@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>Fast, human-readable Playwright failure summaries.</strong>
+  <strong>Stop digging through CI logs. Know exactly why your Playwright tests failed.</strong>
 </p>
 
 <p align="center">
@@ -22,33 +22,66 @@
 </p>
 
 <p align="center">
+  <a href="#the-problem">The problem</a> ·
   <a href="#quickstart">Quickstart</a> ·
   <a href="#example-output">Example output</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#cli">CLI</a>
 </p>
 
-> `testlens-playwright` prints a concise, end-of-run summary explaining **why Playwright tests failed** in CI—optimized for fast debugging, not dashboards.
+## The problem
 
-## What you get
+Your Playwright test fails in CI. Now what?
 
-- **Failure-focused summary** at the end of the run
-- **Network aggregation** (method/status/url) for >= 400 responses
-- **Flake detection** (passed on retry)
-- **Console/pageerror signals** when API signal is absent
+You open the logs. You see:
 
-<details>
-<summary><strong>Failure classification (MVP heuristics)</strong></summary>
+```
+Error: expect(received).toBe(expected)
+  Expected: "Dashboard"
+  Received: "Login"
+```
 
-- API status >= 500 → Backend Issue
-- API status 400–499 → Client/Test Data Issue
-- Passed on retry → Flaky Test
-- Timeout and no API failure → Test Issue
-- Console/pageerror with no API signal → Test Issue
+Was it a backend API returning 500? A race condition that passes locally? Bad test data hitting a 401? You don't know — and finding out means digging through traces, network logs, and screenshots for 10–30 minutes.
 
-</details>
+## What TestLens does
 
-## Requirements
+TestLens adds a **single focused summary at the end of every Playwright run** that tells you the likely cause of each failure — in plain English, without opening anything.
+
+```
+----------------------------------
+TestLens Failure Summary
+----------------------------------
+
+FAIL  Checkout › Place Order
+Likely Cause : Backend Issue
+Reason       : POST /api/orders returned 500 (3 times)
+Confidence   : High
+
+FLAKY  Search › Filter by category
+Likely Cause : Flaky Test
+Reason       : Passed on retry
+Confidence   : High
+
+----------------------------------
+Summary:
+- Total failed tests: 1
+- Flaky tests: 1
+----------------------------------
+```
+
+It automatically classifies each failure as one of:
+
+| Classification | Signal |
+|---|---|
+| **Backend Issue** | An API returned >= 500 during the test |
+| **Client / Test Data Issue** | An API returned 4xx during the test |
+| **Assertion Failure** | `expect()` didn't match — shows expected vs received |
+| **Flaky Test** | Failed on first attempt, passed on retry |
+| **Test Issue** | Timeout, console error, or uncaught page exception |
+
+No configuration. No dashboard. No cloud. Just a clear answer at the bottom of your terminal.
+
+## Install & Requirements
 
 - Node.js (modern LTS recommended)
 - `@playwright/test` >= 1.40.0 (peer dependency)
@@ -206,30 +239,6 @@ export { test };
 ```
 
 ---
-
-## Example output
-
-```
-----------------------------------
-TestLens Failure Summary
-----------------------------------
-
-FAIL Checkout Flow
-Likely Cause: Backend Issue
-Reason: POST https://api.example.com/orders returned 500 (3 times)
-Confidence: High
-
-FLAKY Search Test
-Likely Cause: Flaky Test
-Reason: Passed on retry
-Confidence: High
-
-----------------------------------
-Summary:
-- Total failed tests: X
-- Flaky tests: Y
-----------------------------------
-```
 
 ## How it works
 

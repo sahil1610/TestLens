@@ -74,7 +74,9 @@ export function explainFailure(t: CollectedTestFailure): FailureExplanation {
     };
   }
 
-  const msg = (t.errorMessage ?? '').toLowerCase();
+  const raw = t.errorMessage ?? '';
+  const msg = raw.toLowerCase();
+
   if (msg.includes('timeout') || msg.includes('timed out')) {
     return {
       likelyCause: 'Test Issue',
@@ -83,11 +85,48 @@ export function explainFailure(t: CollectedTestFailure): FailureExplanation {
     };
   }
 
-  // Default
+  if (isAssertionError(raw)) {
+    return {
+      likelyCause: 'Test Issue',
+      reason: extractAssertionReason(raw),
+      confidence: 'High',
+    };
+  }
+
+  if (raw.trim()) {
+    const firstLine = raw.split('\n')[0].trim();
+    return {
+      likelyCause: 'Test Issue',
+      reason: firstLine.length > 120 ? firstLine.slice(0, 120) + '…' : firstLine,
+      confidence: 'Medium',
+    };
+  }
+
   return {
     likelyCause: 'Unknown',
-    reason: 'No strong network or retry signal detected',
+    reason: 'No signal detected — check attachTestLens is wired into your test wrapper',
     confidence: 'Low',
   };
+}
+
+function isAssertionError(msg: string): boolean {
+  return (
+    msg.includes('expect(') ||
+    /Expected[\s\S]{0,10}:/.test(msg) ||
+    /Received[\s\S]{0,10}:/.test(msg) ||
+    /to(Be|Equal|Contain|HaveTitle|HaveText|HaveURL|BeVisible|BeEnabled|BeChecked|BeDisabled|HaveCount|HaveValue)\b/.test(msg)
+  );
+}
+
+function extractAssertionReason(errorMessage: string): string {
+  const expectedMatch = errorMessage.match(/Expected[:\s]+(.+)/);
+  const receivedMatch = errorMessage.match(/Received[:\s]+(.+)/);
+  if (expectedMatch && receivedMatch) {
+    const exp = expectedMatch[1].trim().slice(0, 80);
+    const rec = receivedMatch[1].trim().slice(0, 80);
+    return `Assertion failed: expected ${exp}, received ${rec}`;
+  }
+  const firstLine = errorMessage.split('\n')[0].trim();
+  return `Assertion failed: ${firstLine.slice(0, 120)}`;
 }
 
