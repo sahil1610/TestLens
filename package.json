@@ -1,0 +1,61 @@
+{
+  "name": "testlens-playwright",
+  "version": "0.1.0",
+  "description": "Lightweight Playwright reporter that summarizes why tests failed.",
+  "license": "MIT",
+  "author": "TestLens Contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sahil1610/TestLens.git"
+  },
+  "homepage": "https://github.com/sahil1610/TestLens#readme",
+  "bugs": {
+    "url": "https://github.com/sahil1610/TestLens/issues"
+  },
+  "keywords": [
+    "playwright",
+    "reporter",
+    "testing",
+    "ci",
+    "debugging"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "testlens-playwright": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "prepack": "npm run clean && npm run build",
+    "test": "vitest run",
+    "test:pw": "npm run build && playwright test -c playwright.e2e.config.ts",
+    "test:pw:assert": "vitest run test/playwright.integration.test.ts"
+  },
+  "peerDependencies": {
+    "@playwright/test": "^1.54.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.0",
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.4"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./reporter": {
+      "types": "./dist/reporter.d.ts",
+      "default": "./dist/reporter.js"
+    },
+    "./fixtures": {
+      "types": "./dist/fixtures.d.ts",
+      "default": "./dist/fixtures.js"
+    }
+  }
+}

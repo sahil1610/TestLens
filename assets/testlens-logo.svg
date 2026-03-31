@@ -1,0 +1,21 @@
+<svg width="860" height="220" viewBox="0 0 860 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    Minimal OSS-style logo: flat mark + wordmark.
+    No gradients/shadows to keep it crisp on GitHub and in dark/light modes.
+  -->
+
+  <!-- Mark (lens) -->
+  <g>
+    <circle cx="120" cy="110" r="64" fill="#0B1220"/>
+    <circle cx="120" cy="110" r="40" stroke="#38BDF8" stroke-width="10"/>
+    <path d="M166 156l34 34" stroke="#38BDF8" stroke-width="14" stroke-linecap="round"/>
+    <!-- Inner "signal" tick -->
+    <path d="M104 110l10 10 22-26" stroke="#E2E8F0" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g>
+    <text x="250" y="120" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="64" font-weight="800" fill="#0B1220">TestLens</text>
+    <text x="250" y="160" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="20" font-weight="600" fill="#475569">Fast, human-readable Playwright failure summaries</text>
+  </g>
+</svg>
