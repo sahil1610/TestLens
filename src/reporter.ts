@@ -10,7 +10,6 @@ function line(char = '-', width = 34) {
 }
 
 function formatTitle(title: string) {
-  // Keep single-line for CI readability
   return title.replace(/\s+/g, ' ').trim();
 }
 
@@ -42,11 +41,18 @@ function makeAnsi(enabled: boolean) {
   };
 }
 
+function hasSignals(t: CollectedTestFailure): boolean {
+  return (t.network?.events?.length ?? 0) > 0 || (t.console?.errors?.length ?? 0) > 0;
+}
+
 function pickDisplayTests(tests: CollectedTestFailure[]) {
-  // Prefer failures then flakies; keep stable ordering
   const failed = tests.filter((t) => t.status === 'failed' || t.status === 'timedOut');
   const flaky = tests.filter((t) => t.status === 'flaky' || (t.status === 'passed' && t.retry > 0));
-  return { failed, flaky };
+  // Passed tests that had network errors or console errors — suspicious even though they passed.
+  const suspicious = tests.filter(
+    (t) => t.status === 'passed' && t.retry === 0 && hasSignals(t),
+  );
+  return { failed, flaky, suspicious };
 }
 
 export class TestLensReporter implements Reporter {
@@ -63,19 +69,19 @@ export class TestLensReporter implements Reporter {
 
     const isFlaky = collected.status === 'flaky' || (collected.status === 'passed' && collected.retry > 0);
     const isFail = collected.status === 'failed' || collected.status === 'timedOut';
-    if (!isFlaky && !isFail) return;
+    const isSuspiciousPass = collected.status === 'passed' && collected.retry === 0 && hasSignals(collected);
+
+    if (!isFlaky && !isFail && !isSuspiciousPass) return;
 
     this.collected.set(test.id, collected);
   }
 
   onEnd() {
-    const { failed, flaky } = pickDisplayTests([...this.collected.values()]);
-    if (failed.length === 0 && flaky.length === 0) return;
+    const { failed, flaky, suspicious } = pickDisplayTests([...this.collected.values()]);
+    if (failed.length === 0 && flaky.length === 0 && suspicious.length === 0) return;
 
     const ansi = makeAnsi(supportsColor(colorModeFromEnv()));
 
-    // Keep output ASCII-only to avoid CI encoding issues. (User prompt shows emoji; feel free to add later.)
-    // If you want emoji, swap the header with the example.
     // eslint-disable-next-line no-console
     console.log('');
     // eslint-disable-next-line no-console
@@ -87,6 +93,7 @@ export class TestLensReporter implements Reporter {
     // eslint-disable-next-line no-console
     console.log('');
 
+    // ── Failures & flakies ───────────────────────────────────────────
     const all = [...failed, ...flaky];
     for (const t of all) {
       const explanation = explainFailure(t);
@@ -124,6 +131,39 @@ export class TestLensReporter implements Reporter {
       console.log('');
     }
 
+    // ── Suspicious passes ─────────────────────────────────────────────
+    if (suspicious.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log(ansi.bold(ansi.yellow('Passed with signals (review recommended):')));
+      // eslint-disable-next-line no-console
+      console.log('');
+      for (const t of suspicious) {
+        // eslint-disable-next-line no-console
+        console.log(`${ansi.bold(ansi.yellow('WARN'))} ${ansi.bold(formatTitle(t.title))}`);
+
+        const netEvents = t.network?.events ?? [];
+        for (const e of netEvents) {
+          // eslint-disable-next-line no-console
+          console.log(
+            `  ${ansi.yellow('↳ Network')} ${e.method} ${e.url} → ${ansi.yellow(String(e.status))} (${e.count}x)`,
+          );
+        }
+
+        const consoleErrors = t.console?.errors ?? [];
+        for (const e of consoleErrors) {
+          const prefix = e.type === 'pageerror' ? 'Page error' : 'Console error';
+          const suffix = e.count > 1 ? ` (${e.count}x)` : '';
+          const msg = e.message.length > 100 ? e.message.slice(0, 100) + '…' : e.message;
+          // eslint-disable-next-line no-console
+          console.log(`  ${ansi.yellow(`↳ ${prefix}`)}${suffix}: ${msg}`);
+        }
+
+        // eslint-disable-next-line no-console
+        console.log('');
+      }
+    }
+
+    // ── Summary ───────────────────────────────────────────────────────
     // eslint-disable-next-line no-console
     console.log(ansi.gray(line('-')));
     // eslint-disable-next-line no-console
@@ -132,6 +172,10 @@ export class TestLensReporter implements Reporter {
     console.log(`- Total failed tests: ${failed.length}`);
     // eslint-disable-next-line no-console
     console.log(`- Flaky tests: ${flaky.length}`);
+    if (suspicious.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log(`- Passed with signals: ${suspicious.length}`);
+    }
     // eslint-disable-next-line no-console
     console.log(ansi.gray(line('-')));
     // eslint-disable-next-line no-console
@@ -140,4 +184,3 @@ export class TestLensReporter implements Reporter {
 }
 
 export default TestLensReporter;
-

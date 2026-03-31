@@ -23,7 +23,7 @@ function confidenceForCause(cause: LikelyCause, signal?: NetworkAggregate): Conf
   if (cause === 'Flaky Test') return 'High';
   if (cause === 'Backend Issue' && signal?.status && signal.status >= 500) return 'High';
   if (cause === 'Client/Test Data Issue' && signal?.status && signal.status >= 400) return 'High';
-  if (cause === 'Test Issue') return 'Medium';
+  if (cause === 'Test Issue') return 'High';
   return 'Low';
 }
 
