@@ -33,7 +33,7 @@
     "prepack": "npm run clean && npm run build",
     "test": "vitest run",
     "test:pw": "npm run build && playwright test -c playwright.e2e.config.ts",
-    "test:pw:assert": "vitest run test/playwright.integration.test.ts"
+    "test:integration": "npm run build && node scripts/run-playwright-integration.js"
   },
   "peerDependencies": {
     "@playwright/test": "^1.54.0"

@@ -193,7 +193,7 @@ npm test
 ```
 
 ```bash
-npm run test:pw:assert
+npm run test:integration
 ```
 
 <details>
